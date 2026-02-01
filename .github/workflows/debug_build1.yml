@@ -1,0 +1,50 @@
+name: Build Alpine APK
+
+on:
+  workflow_dispatch: # Biar bisa klik tombol "Run" manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Create Alpine Bootstrap
+        run: |
+          # 1. Download Alpine Minirootfs (aarch64)
+          wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.1-aarch64.tar.gz
+          
+          # 2. Buat struktur folder biar dibaca Installer Termux
+          mkdir -p alpine-dist/usr/bin
+          tar -xf alpine-minirootfs-3.19.1-aarch64.tar.gz -C alpine-dist/
+          
+          # 3. Akali biar shell Alpine jadi shell login
+          cp alpine-dist/bin/sh alpine-dist/usr/bin/login
+          
+          # 4. Zip jadi bootstrap yang bakal dipake APK
+          cd alpine-dist && zip -r ../bootstrap-aarch64.zip . && cd ..
+          
+          # 5. Pindahin ke folder assets APK biar nempel pas di-build
+          mkdir -p app/src/main/assets/
+          mv bootstrap-aarch64.zip app/src/main/assets/
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build APK (Assemble Debug)
+        run: ./gradlew assembleDebug
+
+      - name: Upload Alpine APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alpine-Termux-APK
+          path: app/build/outputs/apk/debug/*.apk
