@@ -20,23 +20,28 @@ jobs:
 
       - name: Create Alpine Bootstrap
         run: |
+          # 1. Download Alpine
           wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.1-aarch64.tar.gz
+          
+          # 2. Buat folder dan ekstrak pake sudo
           mkdir -p alpine-dist
           sudo tar -xf alpine-minirootfs-3.19.1-aarch64.tar.gz -C alpine-dist/
           
-          # 1. BUAT FILE SYMLINKS.TXT (Wajib buat Java Termux baru)
-          # Formatnya: target←nama_link
-          echo "/bin/sh←bin/login" > alpine-dist/SYMLINKS.txt
-          echo "/bin/sh←usr/bin/login" >> alpine-dist/SYMLINKS.txt
+          # 3. BUAT FILE SYMLINKS.TXT (Pake sudo tee biar gak Permission Denied)
+          # Format Termux: target←link_name (pake panah khusus)
+          echo "/bin/sh←bin/login" | sudo tee alpine-dist/SYMLINKS.txt
+          echo "/bin/sh←usr/bin/login" | sudo tee -a alpine-dist/SYMLINKS.txt
           
-          # 2. Buat folder usr/bin biar kodingan Java nggak error pas extract
+          # 4. Buat folder pendukung biar Java gak bingung
           sudo mkdir -p alpine-dist/usr/bin
           sudo cp alpine-dist/bin/sh alpine-dist/usr/bin/login
           
-          # 3. ZIP SEMUANYA
-          cd alpine-dist && sudo zip -ry ../bootstrap-aarch64.zip . && cd ..
+          # 5. ZIP SEMUANYA (Pake sudo)
+          cd alpine-dist
+          sudo zip -ry ../bootstrap-aarch64.zip .
+          cd ..
           
-          # 4. PINDAH KE ASSETS
+          # 6. Pindahin ke Assets
           mkdir -p app/src/main/assets/
           sudo mv bootstrap-aarch64.zip app/src/main/assets/
           
