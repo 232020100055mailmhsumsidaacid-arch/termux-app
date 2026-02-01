@@ -20,30 +20,26 @@ jobs:
 
       - name: Create Alpine Bootstrap
         run: |
-          # 1. Download Alpine Minirootfs
           wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.1-aarch64.tar.gz
-          
-          # 2. Buat folder dan ekstrak
-          mkdir -p alpine-dist/usr/bin
-          # Gunakan sudo buat ekstrak biar semua file keluar tanpa hambatan permission
+          mkdir -p alpine-dist
           sudo tar -xf alpine-minirootfs-3.19.1-aarch64.tar.gz -C alpine-dist/
           
-          # 3. Akali shell (Step wajib Termux)
+          # 1. BUAT FILE SYMLINKS.TXT (Wajib buat Java Termux baru)
+          # Formatnya: target←nama_link
+          echo "/bin/sh←bin/login" > alpine-dist/SYMLINKS.txt
+          echo "/bin/sh←usr/bin/login" >> alpine-dist/SYMLINKS.txt
+          
+          # 2. Buat folder usr/bin biar kodingan Java nggak error pas extract
+          sudo mkdir -p alpine-dist/usr/bin
           sudo cp alpine-dist/bin/sh alpine-dist/usr/bin/login
           
-          # 4. ZIP dengan FORCE & SUDO (Ini kuncinya)
-          # Kita pake sudo biar bisa baca semua file, dan -y buat simpen symlinks
-          cd alpine-dist
-          sudo zip -ry ../bootstrap-aarch64.zip .
-          cd ..
+          # 3. ZIP SEMUANYA
+          cd alpine-dist && sudo zip -ry ../bootstrap-aarch64.zip . && cd ..
           
-          # 5. Pastikan file ada sebelum di-move
-          ls -lh bootstrap-aarch64.zip
-          
-          # 6. Pindahin ke folder assets
+          # 4. PINDAH KE ASSETS
           mkdir -p app/src/main/assets/
           sudo mv bootstrap-aarch64.zip app/src/main/assets/
-
+          
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
