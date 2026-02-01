@@ -20,22 +20,29 @@ jobs:
 
       - name: Create Alpine Bootstrap
         run: |
-          # 1. Download Alpine Minirootfs (aarch64)
+          # 1. Download Alpine Minirootfs
           wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.1-aarch64.tar.gz
           
-          # 2. Buat struktur folder biar dibaca Installer Termux
+          # 2. Buat folder dan ekstrak
           mkdir -p alpine-dist/usr/bin
-          tar -xf alpine-minirootfs-3.19.1-aarch64.tar.gz -C alpine-dist/
+          # Gunakan sudo buat ekstrak biar semua file keluar tanpa hambatan permission
+          sudo tar -xf alpine-minirootfs-3.19.1-aarch64.tar.gz -C alpine-dist/
           
-          # 3. Akali biar shell Alpine jadi shell login
-          cp alpine-dist/bin/sh alpine-dist/usr/bin/login
+          # 3. Akali shell (Step wajib Termux)
+          sudo cp alpine-dist/bin/sh alpine-dist/usr/bin/login
           
-          # 4. Zip jadi bootstrap yang bakal dipake APK
-          cd alpine-dist && zip -r ../bootstrap-aarch64.zip . && cd ..
+          # 4. ZIP dengan FORCE & SUDO (Ini kuncinya)
+          # Kita pake sudo biar bisa baca semua file, dan -y buat simpen symlinks
+          cd alpine-dist
+          sudo zip -ry ../bootstrap-aarch64.zip .
+          cd ..
           
-          # 5. Pindahin ke folder assets APK biar nempel pas di-build
+          # 5. Pastikan file ada sebelum di-move
+          ls -lh bootstrap-aarch64.zip
+          
+          # 6. Pindahin ke folder assets
           mkdir -p app/src/main/assets/
-          mv bootstrap-aarch64.zip app/src/main/assets/
+          sudo mv bootstrap-aarch64.zip app/src/main/assets/
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
